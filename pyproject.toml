@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "kursach-4-guryanova"
+version = "0.1.0"
+description = ""
+authors = ["Artyom Guryanov <bishop81285@gmail.com>"]
+readme = "README.md"
+packages = [{include = "kursach_4_guryanova"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.31.0"
+openpyxl = "^3.1.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
