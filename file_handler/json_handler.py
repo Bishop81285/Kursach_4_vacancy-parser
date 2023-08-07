@@ -16,6 +16,18 @@ class JsonHandler(FileHandler):
         """
         super().__init__(filename)
 
+    def __len__(self) -> int:
+        """
+        Метод для возвращения длины списка вакансий в файле
+        :return: длину списка
+        """
+        with open(self.__file_path + self.filename, "r", encoding="utf-8") as file:
+            json_data = file.read()
+
+        data = json.loads(json_data)
+
+        return len(data)
+
     def add_vacancies(self, vacancies: list):
         """
         Метод для добавления списка вакансий в файл.
@@ -32,6 +44,8 @@ class JsonHandler(FileHandler):
     def get_vacancies(self, **keywords) -> list:
         """
         Метод для возвращения списка вакансий из файла по указанным критериям.
+
+        Если критерии не указаны, то возвращает список всех вакансий в файле
         :param keywords: словарь с критериями для фильтрации вакансий
         :return: список объектов класса Vacancy, удовлетворяющих критериям
         """
@@ -40,30 +54,40 @@ class JsonHandler(FileHandler):
 
         data = json.loads(json_data)
         vacancies = [Vacancy(**vacancy) for vacancy in data]
+
+        if not keywords:
+            return vacancies
+
         filtered_vacancies = []
 
         for vacancy in vacancies:
             match = True
 
             for key, value in keywords.items():
-                if key == "salary_from":
-                    if vacancy.salary < value:
+                if key == "city":
+                    if vacancy.location.lower() != value.lower():
                         match = False
                         break
-                elif key == "salary_to":
-                    if vacancy.salary > value:
+                elif key == "employer":
+                    if vacancy.employer.lower() != value.lower():
                         match = False
                         break
-                elif key == "keywords":
+                elif key == "salary":
+                    if vacancy.salary_from < value["from"] or vacancy.salary_to > value["to"]:
+                        match = False
+                        break
+                elif key == "description":
                     if not any(word in vacancy.description.lower() for word in value):
+                        match = False
+                        break
+                elif key == "requirements":
+                    if not any(word in vacancy.requirement.lower() for word in value):
                         match = False
                         break
                 elif key == "source":
                     if vacancy.source.lower() != value.lower():
                         match = False
                         break
-                else:
-                    raise ValueError(f"Неверный критерий: {key}")
 
             if match:
                 filtered_vacancies.append(vacancy)
@@ -85,7 +109,7 @@ class JsonHandler(FileHandler):
                 'location': vacancy.location,
                 'link': vacancy.link,
                 'employer': vacancy.employer,
-                'salary': vacancy.salary,
+                'salary': vacancy.get_salary(),
                 'description': vacancy.description,
                 'requirement': vacancy.requirement,
                 'experience': vacancy.experience,
