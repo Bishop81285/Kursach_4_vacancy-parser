@@ -8,13 +8,14 @@ from vacancy import Vacancy
 
 class HhParser(Parser):
 
-    def __init__(self, query: str):
+    def __init__(self, query: str, page: int):
         """
         Конструктор класса HhParser.
         :param query: поисковый запрос
+        :param page: кол-во страниц для обработки
         """
         super().__init__(url=API_URL_HH, headers={"User-Agent": "HH-User-Agent"},
-                         params={"text": query})
+                         params={"text": query, 'page': page, 'per_page': 50})
 
     def get_data(self) -> dict:
         """
@@ -22,9 +23,16 @@ class HhParser(Parser):
         :return: данные с API в виде словаря
         """
         response = requests.get(self.url, headers=self.headers, params=self.params)
-        data = response.json()
 
-        return data
+        if response.status_code == 200:
+            data = response.json()
+            return data
+        elif response.status_code == 400:
+            raise ValueError("Неверные параметры запроса")
+        elif response.status_code == 404:
+            raise ValueError("Нет данных по указанному запросу")
+        else:
+            raise ValueError(f"Произошла ошибка при обращении к API HH: {response.status_code}")
 
     def parse_data(self) -> list:
         """
@@ -61,7 +69,3 @@ class HhParser(Parser):
 
         return vacancies
 
-
-hh = HhParser('Python')
-print(hh.get_data())
-print(hh.parse_data()[0])
